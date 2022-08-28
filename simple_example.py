@@ -12,5 +12,3 @@ while True:
         state = env.reset()
     state, reward, done, info = env.step(env.action_space.sample())
     env.render()
-
-env.close()
