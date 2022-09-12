@@ -11,6 +11,7 @@ import gym_super_mario_bros
 from gym.wrappers import FrameStack
 from nes_py.wrappers import JoypadSpace
 from torch import nn
+from torch.utils.tensorboard import SummaryWriter
 
 from wrappers import *
 
@@ -170,6 +171,8 @@ class Agent:
         print(
             f'Episode {episode: <5} - Epsilon {epsilon: <5} - Mean Reward {self.moving_average_episode_rewards[-1]: <5} - Device {device: <5}')
 
+        writer.add_scalar('Mean Reward', self.moving_average_episode_rewards[-1], episode)
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -179,8 +182,10 @@ if __name__ == '__main__':
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     checkpoint_save_period = 10
-    log_period_ = 10
+    log_period_ = 1
     agent = Agent(action_space_dim=env.action_space.n)
+
+    writer = SummaryWriter()
 
     episode = 0
     while True:
