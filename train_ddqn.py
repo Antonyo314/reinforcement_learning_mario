@@ -80,7 +80,7 @@ class Agent:
 
         self.current_step = 0
         self.memory = deque(maxlen=100_000)
-        self.batch_size = 32
+        self.batch_size = 128
 
         self.gamma = 0.95  # discount factor
         self.sync_period = 10_000
