@@ -67,7 +67,10 @@ class MarioNet(nn.Module):
 class Agent:
     def __init__(self, action_space_dim):
         self.action_space_dim = action_space_dim
-        self.net = MarioNet(state_dim=(4, 84, 84), output_dim=self.action_space_dim)
+        if device == 'cuda':
+            self.net = MarioNet(state_dim=(4, 84, 84), output_dim=self.action_space_dim).cuda()
+        else:
+            self.net = MarioNet(state_dim=(4, 84, 84), output_dim=self.action_space_dim)
 
         self.save_dir = datetime.datetime.now().strftime('%Y-%m-%dT%H-%M-%S')
         self.exploration_rate = 1.0
@@ -109,11 +112,20 @@ class Agent:
         if self.batch_size > len(self.memory):
             return
         state, next_state, action, reward, done = self.recall()
-        q_estimate = self.net(state, model='online')[np.arange(0, self.batch_size), action]
+        if device == 'cuda':
+            q_estimate = self.net(state.cuda(), model="online")[np.arange(0, self.batch_size), action.cuda()]
+        else:
+            q_estimate = self.net(state, model='online')[np.arange(0, self.batch_size), action]
+
         with torch.no_grad():
-            best_action = torch.argmax(self.net(next_state, model='online'), dim=1)
-            next_q = self.net(next_state, model='target')[np.arange(0, self.batch_size), best_action]
-            q_target = (reward + (1 - done.float()) * self.gamma * next_q).float()
+            if device == 'cuda':
+                best_action = torch.argmax(self.net(next_state.cuda(), model="online"), dim=1)
+                next_q = self.net(next_state.cuda(), model="target")[np.arange(0, self.batch_size), best_action]
+                q_target = (reward.cuda() + (1 - done.cuda().float()) * self.gamma * next_q).float()
+            else:
+                best_action = torch.argmax(self.net(next_state, model='online'), dim=1)
+                next_q = self.net(next_state, model='target')[np.arange(0, self.batch_size), best_action]
+                q_target = (reward + (1 - done.float()) * self.gamma * next_q).float()
         loss = self.loss(q_estimate, q_target)
         self.optimizer.zero_grad()
         loss.backward()
@@ -125,7 +137,11 @@ class Agent:
             action = np.random.randint(self.action_space_dim)
         else:
             # Exploitation
-            action_values = self.net(torch.tensor(state.__array__()).unsqueeze(0), model='online')
+            if device == 'cuda':
+                state = torch.tensor(state.__array__()).cuda().unsqueeze(0)
+            else:
+                state = torch.tensor(state.__array__()).unsqueeze(0)
+            action_values = self.net(state, model='online')
             action = torch.argmax(action_values, dim=1).item()
 
         self.exploration_rate *= self.exploration_rate_decay
@@ -152,7 +168,7 @@ class Agent:
     def log_period(self, episode, epsilon, device):
         self.moving_average_episode_rewards.append(np.round(np.mean(self.episode_rewards[-log_period_:]), 3))
         print(
-            f'Episode {episode: <5} - Epsilon {epsilon: <5} - Mean Reward {self.moving_average_episode_rewards[-1]: <5} Device {device: <5}')
+            f'Episode {episode: <5} - Epsilon {epsilon: <5} - Mean Reward {self.moving_average_episode_rewards[-1]: <5} - Device {device: <5}')
 
 
 if __name__ == '__main__':
@@ -160,8 +176,7 @@ if __name__ == '__main__':
     parser.add_argument('--render', type=str, required=True)
     args = parser.parse_args()
     render = args.render
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
     checkpoint_save_period = 10
     log_period_ = 10
