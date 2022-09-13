@@ -151,7 +151,10 @@ class Agent:
         return action
 
     def load_checkpoint(self, path):
-        checkpoint = torch.load(path)
+        if device == 'cuda':
+            checkpoint = torch.load(path)
+        else:
+            checkpoint = torch.load(path, map_location=torch.device('cpu'))
         self.net.load_state_dict(checkpoint['model'])
         self.exploration_rate = checkpoint['exploration_rate']
 
