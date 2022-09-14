@@ -1,11 +1,10 @@
-"""Double Deep Q-Network"""
-
 import argparse
 import random
 
 import gym_super_mario_bros
 from gym.wrappers import FrameStack
 from nes_py.wrappers import JoypadSpace
+from tqdm import trange
 
 from ddqn_agent import Agent
 from wrappers import *
@@ -14,11 +13,13 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--render', action='store_true')
     parser.add_argument('--level', type=str, default='SuperMarioBros-1-1-v0')
+    parser.add_argument('--n_episodes', type=int, default=10)
     parser.add_argument('--checkpoint', type=str)
 
     args = parser.parse_args()
     render = args.render
     level = args.level
+    n_episodes = args.n_episodes
     checkpoint = args.checkpoint
 
     env = gym_super_mario_bros.make(level)
@@ -46,30 +47,23 @@ if __name__ == '__main__':
     agent = Agent(action_space_dim=env.action_space.n, level=level, device=device)
 
     if checkpoint is None:
-        print('Training from scratch')
+        print('Testing random agent (model with random weights)')
     else:
         agent.load_checkpoint(checkpoint)
-        print(f'Training from checkpoints: {checkpoint}')
+        print(f'Testing model with checkpoints: {checkpoint}')
 
-    episode = 0
-    while True:
+    res = 0
+    for episode in trange(n_episodes):
         state = env.reset()
         while True:
             action = agent.predict_action(state)
             if render:
                 env.render()
             next_state, reward, done, info = env.step(action)
-            agent.remember(state, next_state, action, reward, done)
-            agent.experience_replay(reward)
             state = next_state
 
-            if done or info['flag_get']:
-                episode += 1
-                agent.log_episode()
-                if episode % checkpoint_save_period == 0:
-                    agent.save_checkpoint(episode=episode)
-                    pass
-                if episode % log_period_ == 0:
-                    agent.log_period(episode=episode, epsilon=agent.exploration_rate, device=device,
-                                     log_period_=log_period_)
+            if done:
+                if info['flag_get']:
+                    res += 1
                 break
+    print(f'The percentage of successful game passes: {round(res / n_episodes * 100, 2)}%')
