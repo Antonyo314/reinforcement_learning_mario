@@ -14,10 +14,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--render', action='store_true')
     parser.add_argument('--level', type=str, default='SuperMarioBros-1-1-v0')
+    parser.add_argument('--checkpoint', type=str)
 
     args = parser.parse_args()
     render = args.render
     level = args.level
+    checkpoint = args.checkpoint
 
     env = gym_super_mario_bros.make(level)
     env = JoypadSpace(env, [["right"], ["right", "A"]])
@@ -42,6 +44,12 @@ if __name__ == '__main__':
     checkpoint_save_period = 10
     log_period_ = 1
     agent = Agent(action_space_dim=env.action_space.n, level=level, device=device)
+
+    if checkpoint is None:
+        print('Training from scratch')
+    else:
+        agent.load_checkpoint(checkpoint)
+        print(f'Training from checkpoints: {checkpoint}')
 
     episode = 0
     while True:
