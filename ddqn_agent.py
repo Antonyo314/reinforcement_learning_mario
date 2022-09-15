@@ -95,6 +95,7 @@ class Agent:
         else:
             q_estimate = self.net(state, model='online')[np.arange(0, self.batch_size), action]
 
+        # q_target = reward + gamma*next_q
         with torch.no_grad():
             if self.device == 'cuda':
                 best_action = torch.argmax(self.net(next_state.cuda(), model="online"), dim=1)
