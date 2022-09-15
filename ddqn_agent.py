@@ -53,7 +53,7 @@ class Agent:
         self.save_dir = datetime.datetime.now().strftime('%Y-%m-%dT%H-%M-%S') + f'_{self.level}'
         self.exploration_rate = 1.0
         self.exploration_rate_decay = 0.99
-        self.exploration_rate_min = 0.1
+        self.exploration_rate_min = 0.01
 
         self.current_step = 0
         self.memory = deque(maxlen=100_000)
