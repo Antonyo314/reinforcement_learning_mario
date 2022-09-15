@@ -8,6 +8,7 @@ from tqdm import trange
 
 from ddqn_agent import Agent
 from wrappers import *
+import time
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
@@ -15,12 +16,14 @@ if __name__ == '__main__':
     parser.add_argument('--level', type=str, default='SuperMarioBros-1-1-v0')
     parser.add_argument('--n_episodes', type=int, default=10)
     parser.add_argument('--checkpoint', type=str)
+    parser.add_argument('--delay', type=float, default=0)
 
     args = parser.parse_args()
     render = args.render
     level = args.level
     n_episodes = args.n_episodes
     checkpoint = args.checkpoint
+    delay = args.delay
 
     env = gym_super_mario_bros.make(level)
     env = JoypadSpace(env, [["right"], ["right", "A"]])
@@ -57,8 +60,10 @@ if __name__ == '__main__':
         state = env.reset()
         while True:
             action = agent.predict_action(state)
+
             if render:
                 env.render()
+            time.sleep(delay)
             next_state, reward, done, info = env.step(action)
             state = next_state
 
