@@ -1,5 +1,5 @@
 # reinforcement_learning_mario
-
+https://youtu.be/61Pbr-M3hcw
 
 ## environment
 https://github.com/Kautenja/gym-super-mario-bros
